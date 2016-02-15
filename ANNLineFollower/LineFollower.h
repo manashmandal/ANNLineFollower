@@ -52,6 +52,8 @@ class Robot {
     uint sideAnalogReading[2];
     uint sideDigitalReading[2];
 
+    String sensorData;
+
   public:
     Robot (uint *lm, uint *rm, uint *s, uint num);
     void begin (void);
@@ -83,9 +85,11 @@ class Robot {
     void anticlockwise(uint lspeed, uint rspeed);
     void stop(void);
     void control_via_bluetooth(void);
+
+    void send_sensor_data(void);
 };
 
-Robot::Robot(uint *lm, uint *rm, uint *s, uint num) : singleThreshold(true) , activeSensors(0), threshold(DEFAULT_THRESHOLD), weight(DEFAULT_WEIGHT), leftSpeed(DEFAULT_SPEED), rightSpeed(DEFAULT_SPEED) {
+Robot::Robot(uint *lm, uint *rm, uint *s, uint num) : singleThreshold(true) , activeSensors(0), threshold(DEFAULT_THRESHOLD), weight(DEFAULT_WEIGHT), leftSpeed(DEFAULT_SPEED), rightSpeed(DEFAULT_SPEED), sensorData("") {
   motors.setMotorPins(lm, rm);
   //Allocating memory
   sensors = new uint[num];
@@ -116,7 +120,9 @@ void Robot::read_line(void){
     if (analogReading[i] > threshold) {
       digitalReading[i] = INSIDE_LINE;
       activeSensors++;
-    } else digitalReading[i] = OUTSIDE_LINE;
+    } else {
+      digitalReading[i] = OUTSIDE_LINE;
+    }
   }
 }
 
@@ -207,30 +213,44 @@ void Robot::debug_with_different_thresholds(int _del = DEBUG_DELAY){
 }
 
 void Robot::forward(uint lspeed, uint rspeed){
+  leftSpeed = lspeed;
+  rightSpeed = rspeed;
   motors.go(lspeed, rspeed, FORWARD);
 }
 
 void Robot::backward(uint lspeed, uint rspeed){
+  leftSpeed = lspeed;
+  rightSpeed = rspeed;
   motors.go(lspeed, rspeed, BACKWARD);
 }
 
 void Robot::left(uint rspeed){
+  leftSpeed = 0;
+  rightSpeed = rspeed;
   motors.go(0, rspeed, LEFT);
 }
 
 void Robot::right(uint lspeed){
+  leftSpeed = lspeed;
+  rightSpeed = 0;
   motors.go(lspeed, 0, RIGHT);
 }
 
 void Robot::clockwise(uint lspeed, uint rspeed){
+  leftSpeed = lspeed;
+  rightSpeed = rspeed;
   motors.go(lspeed, rspeed, CLOCKWISE);
 }
 
 void Robot::anticlockwise(uint lspeed, uint rspeed){
+  leftSpeed = lspeed;
+  rightSpeed = rspeed;
   motors.go(lspeed, rspeed, ANTICLOCKWISE);
 }
 
 void Robot::stop(void){
+  leftSpeed = 0;
+  rightSpeed = 0;
   motors.go(0, 0, NOWHERE);
 }
 
@@ -266,16 +286,54 @@ void Robot::control_via_bluetooth(void){
   }
 }
 
+void Robot::send_sensor_data(void){
+  String data = "";
+  for (int i = 0; i < numberOfSensors; i++){
+    data += " " + String(digitalReading[i]) + " ";
+  }
+
+  data += String(leftSpeed) + " " + String(rightSpeed) + " \n";
+  Serial.print(data);
+  bluetooth.print(data);
+}
+
 void Robot::differential_drive(void){
   int pos = get_position();
-  if (pos == 2500) forward(180, 180); // 0110
-  else if (pos > 1500 && pos < 2500) left(90); //0100
-  else if (pos > 1000 && pos <= 1500) left(95); //1100
-  else if (pos > 500 && pos <= 1000) left(100); //1000
-  else if (pos >= 3000 && pos < 3500) right(90); //0010
-  else if (pos >= 3500 && pos < 4000) right(95); //0011
-  else if (pos >= 4000 && pos < 5000) right(100); //0001
-  else if (pos < 0) stop();
+  
+  if (pos == 2500) {
+    forward(180, 180); // 0110
+//    send_sensor_data();
+  }
+  else if (pos > 1500 && pos < 2500) {
+    left(90); //0100
+//    send_sensor_data();
+  }
+  else if (pos > 1000 && pos <= 1500) {
+    left(95); //1100
+//    send_sensor_data();
+  }
+  else if (pos > 500 && pos <= 1000) {
+    left(100); //1000
+//    send_sensor_data();
+  }
+  else if (pos >= 3000 && pos < 3500){
+    right(90); //0010
+//    send_sensor_data();
+  }
+  else if (pos >= 3500 && pos < 4000) {
+    right(95); //0011
+//    send_sensor_data();
+  }
+  else if (pos >= 4000 && pos < 5000) {
+    right(100); //0001
+//    send_sensor_data();
+  }
+  else if (pos < 0) {
+    stop();
+//    send_sensor_data();
+  }
+
+  send_sensor_data();
 }
 
 
