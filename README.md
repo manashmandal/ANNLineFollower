@@ -5,3 +5,4 @@ Ann Based Line Follower
 
 
 * implement ann data collector
+* problem with motor library
