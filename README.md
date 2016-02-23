@@ -7,3 +7,4 @@ Ann Based Line Follower
 * implement ann data collector
 * problem with motor library
 * problem with bluetooth data transfer
+* problem with libs
