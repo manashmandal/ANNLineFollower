@@ -8,3 +8,4 @@ Ann Based Line Follower
 * problem with motor library
 * problem with bluetooth data transfer
 * problem with libs
+* adding new motor driving library
